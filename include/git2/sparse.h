@@ -43,6 +43,22 @@ GIT_EXTERN(int) git_sparse_checkout_set(
 	git_repository *repo,
 	const git_strarray *directories);
 
+/**
+ * Update index skip-worktree flags from sparse-checkout patterns.
+ *
+ * This reads the cone-mode patterns in `$GIT_DIR/info/sparse-checkout`
+ * and marks excluded stage-zero index entries with
+ * `GIT_INDEX_ENTRY_SKIP_WORKTREE`. Included entries have that flag
+ * cleared.
+ *
+ * This function does not add, remove, or otherwise modify files in the
+ * working directory.
+ *
+ * @param repo repository whose index will be updated
+ * @return 0 on success, or an error code
+ */
+GIT_EXTERN(int) git_sparse_checkout_update_index(git_repository *repo);
+
 /** @} */
 GIT_END_DECL
 
