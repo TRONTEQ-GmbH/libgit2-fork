@@ -11,6 +11,7 @@
 #include "repository.h"
 #include "refspec.h"
 #include "net.h"
+#include "oidarray.h"
 #include "indexer.h"
 #include "strarray.h"
 #include "transport.h"
@@ -1155,6 +1156,25 @@ GIT_EXTERN(int) git_remote_fetch(
 		const git_strarray *refspecs,
 		const git_fetch_options *opts,
 		const char *reflog_message);
+
+/**
+ * Fetch individual object IDs from a remote.
+ *
+ * This is useful for backfilling objects omitted by a partial clone.
+ * The remote server must support fetching reachable objects by object ID.
+ *
+ * The supplied object IDs are fetched without an object filter and without
+ * automatic tag following. Fetch callbacks in `opts` are honored.
+ *
+ * @param remote remote to fetch from
+ * @param oids object IDs to fetch
+ * @param opts fetch options, or NULL for defaults
+ * @return 0 on success or an error code
+ */
+GIT_EXTERN(int) git_remote_fetch_oids(
+	git_remote *remote,
+	const git_oidarray *oids,
+	const git_fetch_options *opts);
 
 /**
  * Prune tracking refs that are no longer present on remote.

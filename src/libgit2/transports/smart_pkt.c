@@ -735,6 +735,11 @@ static int buffer_want_with_caps(
 	if (wants->filter_spec)
 		git_str_puts(&str, GIT_CAP_FILTER " ");
 
+	if (caps->want_reachable_sha1)
+		git_str_puts(&str, GIT_CAP_WANT_REACHABLE_SHA1 " ");
+	else if (caps->want_tip_sha1)
+		git_str_puts(&str, GIT_CAP_WANT_TIP_SHA1 " ");
+
 	if (git_str_oom(&str))
 		return -1;
 

@@ -157,6 +157,14 @@ static int filter_wants(git_remote *remote, const git_fetch_options *opts)
 		if (!git_oid__is_hexstr(spec->src, remote->repo->oid_type))
 			continue;
 
+		if (!(remote_caps & (GIT_REMOTE_CAPABILITY_TIP_OID |
+		                     GIT_REMOTE_CAPABILITY_REACHABLE_OID))) {
+			git_error_set(
+				GIT_ERROR_NET,
+				"server does not support fetching objects by ID");
+			error = GIT_ENOTSUPPORTED;
+			goto cleanup;
+		}
 
 		if ((error = maybe_want_oid(remote, spec)) < 0)
 			goto cleanup;

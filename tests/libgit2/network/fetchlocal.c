@@ -53,6 +53,33 @@ void test_network_fetchlocal__complete(void)
 	git_repository_free(repo);
 }
 
+void test_network_fetchlocal__fetch_oids(void)
+{
+	git_repository *repo;
+	git_remote *origin;
+	git_odb *odb;
+	git_oid oid;
+	git_oidarray oids;
+	const char *url = cl_git_fixture_url("testrepo.git");
+
+	cl_set_cleanup(&cleanup_local_repo, "foo");
+	cl_git_pass(git_repository_init(&repo, "foo", true));
+	cl_git_pass(git_remote_create(&origin, repo, GIT_REMOTE_ORIGIN, url));
+	cl_git_pass(git_oid_from_string(
+		&oid, "a8233120f6ad708f843d861ce2b7228ec4e3dec6", GIT_OID_SHA1));
+
+	oids.ids = &oid;
+	oids.count = 1;
+
+	cl_git_pass(git_remote_fetch_oids(origin, &oids, NULL));
+	cl_git_pass(git_repository_odb(&odb, repo));
+	cl_assert(git_odb_exists(odb, &oid));
+
+	git_odb_free(odb);
+	git_remote_free(origin);
+	git_repository_free(repo);
+}
+
 void test_network_fetchlocal__prune(void)
 {
 	git_repository *repo;

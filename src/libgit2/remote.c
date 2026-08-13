@@ -1429,6 +1429,60 @@ done:
 	return error;
 }
 
+int git_remote_fetch_oids(
+	git_remote *remote,
+	const git_oidarray *oids,
+	const git_fetch_options *given_opts)
+{
+	git_fetch_options opts = GIT_FETCH_OPTIONS_INIT;
+	git_strarray refspecs = { 0 };
+	char **refspec_strings = NULL;
+	size_t i;
+	int error;
+
+	GIT_ASSERT_ARG(remote);
+	GIT_ASSERT_ARG(oids);
+
+	if (!oids->count)
+		return 0;
+
+	if (given_opts)
+		memcpy(&opts, given_opts, sizeof(git_fetch_options));
+
+	if ((refspec_strings = git__calloc(oids->count, sizeof(char *))) == NULL)
+		return -1;
+
+	for (i = 0; i < oids->count; i++) {
+		char oid[GIT_OID_MAX_HEXSIZE + 1];
+
+		if (git_oid_is_zero(&oids->ids[i])) {
+			git_error_set(GIT_ERROR_INVALID, "cannot fetch a zero object ID");
+			error = GIT_EINVALID;
+			goto done;
+		}
+
+		git_oid_tostr(oid, sizeof(oid), &oids->ids[i]);
+		if ((refspec_strings[i] = git__strdup(oid)) == NULL) {
+			error = -1;
+			goto done;
+		}
+	}
+
+	refspecs.strings = refspec_strings;
+	refspecs.count = oids->count;
+
+	opts.download_tags = GIT_REMOTE_DOWNLOAD_TAGS_NONE;
+	opts.filter_spec = NULL;
+	error = git_remote_fetch(remote, &refspecs, &opts, NULL);
+
+done:
+	for (i = 0; i < oids->count; i++)
+		git__free(refspec_strings[i]);
+
+	git__free(refspec_strings);
+	return error;
+}
+
 static int remote_head_for_fetchspec_src(git_remote_head **out, git_vector *update_heads, const char *fetchspec_src)
 {
 	unsigned int i;
