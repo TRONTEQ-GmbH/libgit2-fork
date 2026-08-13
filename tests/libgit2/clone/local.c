@@ -280,6 +280,7 @@ void test_clone_local__filtered_sparse_clone_reaches_transport(void)
 
 	opts.fetch_opts.filter_spec = "blob:none";
 	opts.sparse_checkout_directories = sparse_directories;
+	opts.sparse_checkout = 1;
 
 	cl_git_fail_with(
 		GIT_ENOTSUPPORTED,
@@ -310,17 +311,28 @@ void test_clone_local__sparse_checkout(void)
 	cl_repo_commit_from_index(NULL, source, NULL, 0, "initial commit");
 
 	opts.sparse_checkout_directories = sparse_directories;
+	opts.sparse_checkout = 1;
 	cl_git_pass(git_clone(&clone, "./source", "./clone", &opts));
 
 	cl_assert(git_fs_path_isfile("./clone/root.txt"));
 	cl_assert(git_fs_path_isfile("./clone/selected/keep.txt"));
 	cl_assert(!git_fs_path_isfile("./clone/excluded/drop.txt"));
 
+	git_repository_free(clone);
+	opts.sparse_checkout_directories.strings = NULL;
+	opts.sparse_checkout_directories.count = 0;
+	cl_git_pass(git_clone(&clone, "./source", "./root-only", &opts));
+	cl_assert(git_fs_path_isfile("./root-only/root.txt"));
+	cl_assert(!git_fs_path_isfile("./root-only/selected/keep.txt"));
+	cl_assert(!git_fs_path_isfile("./root-only/excluded/drop.txt"));
+
 	git_index_free(index);
 	git_repository_free(clone);
 	git_repository_free(source);
 	cl_git_pass(
 	        git_futils_rmdir_r("./clone", NULL, GIT_RMDIR_REMOVE_FILES));
+	cl_git_pass(
+	        git_futils_rmdir_r("./root-only", NULL, GIT_RMDIR_REMOVE_FILES));
 	cl_git_pass(
 	        git_futils_rmdir_r("./source", NULL, GIT_RMDIR_REMOVE_FILES));
 }

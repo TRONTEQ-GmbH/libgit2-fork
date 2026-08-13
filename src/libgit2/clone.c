@@ -370,7 +370,7 @@ static int should_checkout(
 {
 	int error;
 
-	if (!opts || is_bare || opts->sparse_checkout_directories.count ||
+	if (!opts || is_bare || opts->sparse_checkout ||
 	    opts->checkout_opts.checkout_strategy == GIT_CHECKOUT_NONE) {
 		*out = false;
 		return 0;
@@ -387,7 +387,7 @@ static int sparse_checkout_clone(git_repository *repo, const git_clone_options *
 {
 	int error;
 
-	if (!opts->sparse_checkout_directories.count)
+	if (!opts->sparse_checkout)
 		return 0;
 
 	if ((error = git_sparse_checkout_set(
@@ -647,10 +647,17 @@ static int clone_repo(
 			"sparse checkout directories must not be NULL");
 		return GIT_EINVALID;
 	}
+	if (!options.sparse_checkout &&
+	    options.sparse_checkout_directories.count) {
+		git_error_set(
+			GIT_ERROR_INVALID,
+			"sparse checkout directories require sparse checkout to be enabled");
+		return GIT_EINVALID;
+	}
 
 	if (options.fetch_opts.filter_spec &&
 	    !options.bare &&
-	    !options.sparse_checkout_directories.count &&
+	    !options.sparse_checkout &&
 	    options.checkout_opts.checkout_strategy != GIT_CHECKOUT_NONE) {
 		git_error_set(
 			GIT_ERROR_INVALID,

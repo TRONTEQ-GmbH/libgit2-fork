@@ -172,10 +172,13 @@ typedef struct git_clone_options {
 
 	/** Directories to materialize with cone-mode sparse checkout. */
 	git_strarray sparse_checkout_directories;
+
+	/** Enable cone-mode sparse checkout during clone. */
+	int sparse_checkout;
 } git_clone_options;
 
 /** Current version for the `git_clone_options` structure */
-#define GIT_CLONE_OPTIONS_VERSION 2
+#define GIT_CLONE_OPTIONS_VERSION 3
 
 /** Static constructor for `git_clone_options` */
 #define GIT_CLONE_OPTIONS_INIT \
