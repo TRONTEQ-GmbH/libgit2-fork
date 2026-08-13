@@ -849,10 +849,22 @@ typedef struct {
 	 * Extra headers for this fetch operation
 	 */
 	git_strarray custom_headers;
+
+	/**
+	 * Object filter specification to send to the server during fetch.
+	 *
+	 * NULL performs an unfiltered fetch. This release supports only
+	 * "blob:none". A filtered fetch requires a server that advertises
+	 * the `filter` upload-pack capability.
+	 *
+	 * A filtered clone must disable checkout with
+	 * `GIT_CHECKOUT_NONE` until promisor-object support is available.
+	 */
+	const char *filter_spec;
 } git_fetch_options;
 
 /** Current version for the `git_fetch_options` structure */
-#define GIT_FETCH_OPTIONS_VERSION 1
+#define GIT_FETCH_OPTIONS_VERSION 2
 
 /** Static constructor for `git_fetch_options` */
 #define GIT_FETCH_OPTIONS_INIT { \
@@ -861,7 +873,11 @@ typedef struct {
 	GIT_FETCH_PRUNE_UNSPECIFIED, \
 	GIT_REMOTE_UPDATE_FETCHHEAD, \
 	GIT_REMOTE_DOWNLOAD_TAGS_UNSPECIFIED, \
-	GIT_PROXY_OPTIONS_INIT }
+	GIT_PROXY_OPTIONS_INIT, \
+	0, \
+	0, \
+	{ NULL, 0 }, \
+	NULL }
 
 /**
  * Initialize git_fetch_options structure

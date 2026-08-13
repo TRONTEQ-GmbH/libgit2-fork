@@ -21,6 +21,21 @@
 #include "refs.h"
 #include "transports/smart.h"
 
+static int validate_filter_spec(const char *filter_spec)
+{
+	if (!filter_spec)
+		return 0;
+
+	if (!strcmp(filter_spec, "blob:none"))
+		return 0;
+
+	git_error_set(
+		GIT_ERROR_INVALID,
+		"unsupported fetch filter '%s'; only 'blob:none' is supported",
+		filter_spec);
+	return GIT_EINVALIDSPEC;
+}
+
 static int maybe_want(git_remote *remote, git_remote_head *head, git_refspec *tagspec, git_remote_autotag_option_t tagopt)
 {
 	int match = 0, valid;
@@ -166,11 +181,18 @@ int git_fetch_negotiate(git_remote *remote, const git_fetch_options *opts)
 	int error;
 
 	remote->need_pack = 0;
+	remote->nego.filter_spec = NULL;
 
 	if (opts) {
 		GIT_ASSERT_ARG(opts->depth >= 0);
 		remote->nego.depth = opts->depth;
+
+		if (opts->version >= 2)
+			remote->nego.filter_spec = opts->filter_spec;
 	}
+
+	if ((error = validate_filter_spec(remote->nego.filter_spec)) < 0)
+		return error;
 
 	if (filter_wants(remote, opts) < 0)
 		return -1;

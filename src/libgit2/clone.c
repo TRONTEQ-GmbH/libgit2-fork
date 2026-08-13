@@ -622,6 +622,15 @@ static int clone_repo(
 
 	GIT_ERROR_CHECK_VERSION(&options, GIT_CLONE_OPTIONS_VERSION, "git_clone_options");
 
+	if (options.fetch_opts.filter_spec &&
+	    !options.bare &&
+	    options.checkout_opts.checkout_strategy != GIT_CHECKOUT_NONE) {
+		git_error_set(
+			GIT_ERROR_INVALID,
+			"filtered clones require GIT_CHECKOUT_NONE until promisor-object support is available");
+		return GIT_EINVALID;
+	}
+
 	/* enforce some behavior on fetch */
 	options.fetch_opts.update_fetchhead = 0;
 
