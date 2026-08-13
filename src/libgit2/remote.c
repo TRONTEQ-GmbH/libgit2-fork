@@ -1483,6 +1483,40 @@ done:
 	return error;
 }
 
+int git_repository_fetch_promisor(
+	git_repository *repo,
+	const git_oidarray *oids,
+	const git_fetch_options *opts)
+{
+	git_config *config = NULL;
+	git_remote *remote = NULL;
+	const char *remote_name;
+	int error;
+
+	GIT_ASSERT_ARG(repo);
+	GIT_ASSERT_ARG(oids);
+
+	if (!oids->count)
+		return 0;
+
+	if ((error = git_repository_config_snapshot(&config, repo)) < 0)
+		goto done;
+
+	if ((error = git_config_get_string(
+			 &remote_name, config, "extensions.partialclone")) < 0)
+		goto done;
+
+	if ((error = git_remote_lookup(&remote, repo, remote_name)) < 0)
+		goto done;
+
+	error = git_remote_fetch_oids(remote, oids, opts);
+
+done:
+	git_remote_free(remote);
+	git_config_free(config);
+	return error;
+}
+
 static int remote_head_for_fetchspec_src(git_remote_head **out, git_vector *update_heads, const char *fetchspec_src)
 {
 	unsigned int i;

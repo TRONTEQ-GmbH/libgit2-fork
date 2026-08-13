@@ -1177,6 +1177,25 @@ GIT_EXTERN(int) git_remote_fetch_oids(
 	const git_fetch_options *opts);
 
 /**
+ * Fetch individual object IDs from this repository's promisor remote.
+ *
+ * The promisor remote is configured by `extensions.partialClone`, as in a
+ * Git partial clone. This is useful for hydrating objects omitted by a
+ * filtered fetch while keeping authentication, progress, and cancellation
+ * under the caller's control through `opts`.
+ *
+ * @param repo partial-clone repository
+ * @param oids object IDs to fetch
+ * @param opts fetch options, or NULL for defaults
+ * @return 0 on success, GIT_ENOTFOUND if no promisor remote is configured,
+ *         or an error code
+ */
+GIT_EXTERN(int) git_repository_fetch_promisor(
+	git_repository *repo,
+	const git_oidarray *oids,
+	const git_fetch_options *opts);
+
+/**
  * Prune tracking refs that are no longer present on remote.
  *
  * If callbacks are not specified then the callbacks specified to
