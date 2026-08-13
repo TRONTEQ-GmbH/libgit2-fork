@@ -6,13 +6,16 @@
  */
 
 #include "git2/sparse.h"
+#include "git2/checkout.h"
 #include "git2/index.h"
+#include "git2/tree.h"
 
 #include "repository.h"
 #include "config.h"
 #include "filebuf.h"
 #include "futils.h"
 #include "path.h"
+#include "vector.h"
 
 static int validate_directory(git_repository *repo, const char *directory)
 {
@@ -321,6 +324,97 @@ int git_sparse_checkout_initialize_index(git_repository *repo)
 
 done:
 	git_tree_free(tree);
+	git_index_free(index);
+	return error;
+}
+
+static int
+sparse_checkout_collect_paths(git_vector *paths, git_repository *repo)
+{
+	git_index *index = NULL;
+	git_index_iterator *iterator = NULL;
+	const git_index_entry *entry;
+	int error;
+
+	if ((error = git_repository_index(&index, repo)) < 0 ||
+	    (error = git_index_iterator_new(&iterator, index)) < 0)
+		goto done;
+
+	while ((error = git_index_iterator_next(&entry, iterator)) == 0) {
+		char *path;
+
+		if (GIT_INDEX_ENTRY_STAGE(entry) != 0 ||
+		    (entry->flags_extended & GIT_INDEX_ENTRY_SKIP_WORKTREE) !=
+		            0)
+			continue;
+
+		if ((path = git__strdup(entry->path)) == NULL ||
+		    (error = git_vector_insert(paths, path)) < 0) {
+			git__free(path);
+			goto done;
+		}
+	}
+
+	if (error == GIT_ITEROVER)
+		error = 0;
+
+done:
+	git_index_iterator_free(iterator);
+	git_index_free(index);
+	return error;
+}
+
+int git_sparse_checkout_checkout(git_repository *repo)
+{
+	git_checkout_options checkout_opts = GIT_CHECKOUT_OPTIONS_INIT;
+	git_index *index = NULL;
+	git_treebuilder *builder = NULL;
+	git_tree *head = NULL, *empty = NULL;
+	git_oid empty_id;
+	git_vector paths = GIT_VECTOR_INIT;
+	int error;
+
+	GIT_ASSERT_ARG(repo);
+
+	if (git_repository_is_bare(repo)) {
+		git_error_set(
+		        GIT_ERROR_REPOSITORY,
+		        "cannot checkout sparse paths in a bare repository");
+		return GIT_EBAREREPO;
+	}
+
+	if ((error = git_repository_index(&index, repo)) < 0 ||
+	    (error = git_repository_head_tree(&head, repo)) < 0)
+		goto done;
+
+	if (git_index_entrycount(index) == 0) {
+		git_error_set(
+		        GIT_ERROR_INDEX,
+		        "sparse checkout index has not been initialized");
+		error = GIT_EUNCOMMITTED;
+		goto done;
+	}
+
+	if ((error = git_vector_init(
+	             &paths, git_index_entrycount(index), NULL)) < 0 ||
+	    (error = sparse_checkout_collect_paths(&paths, repo)) < 0 ||
+	    (error = git_treebuilder_new(&builder, repo, NULL)) < 0 ||
+	    (error = git_treebuilder_write(&empty_id, builder)) < 0 ||
+	    (error = git_tree_lookup(&empty, repo, &empty_id)) < 0)
+		goto done;
+
+	checkout_opts.checkout_strategy = GIT_CHECKOUT_RECREATE_MISSING;
+	checkout_opts.baseline = empty;
+	checkout_opts.paths.strings = (char **)paths.contents;
+	checkout_opts.paths.count = paths.length;
+
+	error = git_checkout_tree(repo, (git_object *)head, &checkout_opts);
+
+done:
+	git_vector_dispose_deep(&paths);
+	git_tree_free(empty);
+	git_treebuilder_free(builder);
+	git_tree_free(head);
 	git_index_free(index);
 	return error;
 }

@@ -74,6 +74,20 @@ GIT_EXTERN(int) git_sparse_checkout_update_index(git_repository *repo);
  */
 GIT_EXTERN(int) git_sparse_checkout_initialize_index(git_repository *repo);
 
+/**
+ * Materialize included sparse-checkout paths from HEAD.
+ *
+ * The repository index must already have been initialized with
+ * `git_sparse_checkout_initialize_index`. Only stage-zero entries
+ * without `GIT_INDEX_ENTRY_SKIP_WORKTREE` are checked out.
+ *
+ * Existing excluded files are not removed from the working directory.
+ *
+ * @param repo repository whose sparse paths will be checked out
+ * @return 0 on success, or an error code
+ */
+GIT_EXTERN(int) git_sparse_checkout_checkout(git_repository *repo);
+
 /** @} */
 GIT_END_DECL
 
