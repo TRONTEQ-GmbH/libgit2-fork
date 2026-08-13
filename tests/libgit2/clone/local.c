@@ -1,6 +1,7 @@
 #include "clar_libgit2.h"
 
 #include "git2/clone.h"
+#include "git2/index.h"
 #include "clone.h"
 #include "path.h"
 #include "posix.h"
@@ -283,6 +284,45 @@ void test_clone_local__filtered_sparse_clone_reaches_transport(void)
 	cl_git_fail_with(
 		GIT_ENOTSUPPORTED,
 		git_clone(&repo, cl_fixture("testrepo.git"), "./clone.git", &opts));
+}
+
+void test_clone_local__sparse_checkout(void)
+{
+	char *directories[] = { "selected" };
+	git_strarray sparse_directories = {
+		directories,
+		ARRAY_SIZE(directories),
+	};
+	git_clone_options opts = GIT_CLONE_OPTIONS_INIT;
+	git_index *index;
+	git_repository *source, *clone;
+
+	cl_git_pass(git_repository_init(&source, "./source", 0));
+	cl_git_mkfile("./source/root.txt", "root\n");
+	cl_git_pass(p_mkdir("./source/selected", 0777));
+	cl_git_mkfile("./source/selected/keep.txt", "keep\n");
+	cl_git_pass(p_mkdir("./source/excluded", 0777));
+	cl_git_mkfile("./source/excluded/drop.txt", "drop\n");
+
+	cl_git_pass(git_repository_index(&index, source));
+	cl_git_pass(git_index_add_all(index, NULL, 0, NULL, NULL));
+	cl_git_pass(git_index_write(index));
+	cl_repo_commit_from_index(NULL, source, NULL, 0, "initial commit");
+
+	opts.sparse_checkout_directories = sparse_directories;
+	cl_git_pass(git_clone(&clone, "./source", "./clone", &opts));
+
+	cl_assert(git_fs_path_isfile("./clone/root.txt"));
+	cl_assert(git_fs_path_isfile("./clone/selected/keep.txt"));
+	cl_assert(!git_fs_path_isfile("./clone/excluded/drop.txt"));
+
+	git_index_free(index);
+	git_repository_free(clone);
+	git_repository_free(source);
+	cl_git_pass(
+	        git_futils_rmdir_r("./clone", NULL, GIT_RMDIR_REMOVE_FILES));
+	cl_git_pass(
+	        git_futils_rmdir_r("./source", NULL, GIT_RMDIR_REMOVE_FILES));
 }
 
 void test_clone_local__sha256_via_no_local(void)
