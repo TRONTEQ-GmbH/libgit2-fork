@@ -116,3 +116,28 @@ void test_repo_sparse__updates_skip_worktree_flags(void)
 
 	git_index_free(index);
 }
+
+void test_repo_sparse__initializes_empty_index_from_head(void)
+{
+	git_strarray sparse_directories = {
+		NULL,
+		0,
+	};
+	git_index *index;
+	const git_index_entry *entry;
+
+	cl_git_pass(git_repository_index(&index, g_repo));
+	cl_git_pass(git_index_clear(index));
+	cl_git_pass(git_index_write(index));
+
+	cl_git_pass(git_sparse_checkout_set(g_repo, &sparse_directories));
+	cl_git_pass(git_sparse_checkout_initialize_index(g_repo));
+
+	cl_assert_equal_i(4, git_index_entrycount(index));
+
+	entry = git_index_get_bypath(index, "README", 0);
+	cl_assert(entry);
+	cl_assert((entry->flags_extended & GIT_INDEX_ENTRY_SKIP_WORKTREE) == 0);
+
+	git_index_free(index);
+}

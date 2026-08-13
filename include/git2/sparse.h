@@ -59,6 +59,21 @@ GIT_EXTERN(int) git_sparse_checkout_set(
  */
 GIT_EXTERN(int) git_sparse_checkout_update_index(git_repository *repo);
 
+/**
+ * Initialize an empty index from HEAD and apply sparse-checkout flags.
+ *
+ * This is intended for repositories cloned with `GIT_CHECKOUT_NONE`.
+ * The index must be empty; an existing index is left untouched to avoid
+ * discarding staged changes.
+ *
+ * This function does not modify the working directory.
+ *
+ * @param repo repository whose empty index will be initialized
+ * @return 0 on success, GIT_EUNCOMMITTED if the index is non-empty,
+ *         or an error code
+ */
+GIT_EXTERN(int) git_sparse_checkout_initialize_index(git_repository *repo);
+
 /** @} */
 GIT_END_DECL
 

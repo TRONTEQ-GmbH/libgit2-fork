@@ -285,3 +285,42 @@ done:
 	git_str_dispose(&path);
 	return error;
 }
+
+int git_sparse_checkout_initialize_index(git_repository *repo)
+{
+	git_index *index = NULL;
+	git_tree *tree = NULL;
+	int error;
+
+	GIT_ASSERT_ARG(repo);
+
+	if (git_repository_is_bare(repo)) {
+		git_error_set(
+		        GIT_ERROR_REPOSITORY,
+		        "cannot initialize sparse checkout index in a bare repository");
+		return GIT_EBAREREPO;
+	}
+
+	if ((error = git_repository_index(&index, repo)) < 0 ||
+	    (error = git_repository_head_tree(&tree, repo)) < 0)
+		goto done;
+
+	if (git_index_entrycount(index) != 0) {
+		git_error_set(
+		        GIT_ERROR_INDEX,
+		        "cannot initialize sparse checkout with a non-empty index");
+		error = GIT_EUNCOMMITTED;
+		goto done;
+	}
+
+	if ((error = git_index_read_tree(index, tree)) < 0 ||
+	    (error = git_index_write(index)) < 0)
+		goto done;
+
+	error = git_sparse_checkout_update_index(repo);
+
+done:
+	git_tree_free(tree);
+	git_index_free(index);
+	return error;
+}
