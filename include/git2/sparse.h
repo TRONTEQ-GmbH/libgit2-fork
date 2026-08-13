@@ -92,6 +92,25 @@ GIT_EXTERN(int) git_sparse_checkout_checkout(
 	git_repository *repo,
 	const git_checkout_options *opts);
 
+/**
+ * Configure and materialize a cone-mode sparse checkout.
+ *
+ * This writes the sparse-checkout configuration, initializes an empty
+ * index from HEAD or updates an existing index, and materializes the
+ * included paths. Conflicted indexes are rejected.
+ *
+ * Existing excluded files are not removed from the working directory.
+ *
+ * @param repo repository to configure and check out
+ * @param directories directories to include in the cone
+ * @param opts optional checkout options passed to materialization
+ * @return 0 on success, GIT_ECONFLICT for an unmerged index, or an error code
+ */
+GIT_EXTERN(int) git_sparse_checkout_apply(
+	git_repository *repo,
+	const git_strarray *directories,
+	const git_checkout_options *opts);
+
 /** @} */
 GIT_END_DECL
 

@@ -427,3 +427,50 @@ done:
 	git_index_free(index);
 	return error;
 }
+
+int git_sparse_checkout_apply(
+        git_repository *repo,
+        const git_strarray *directories,
+        const git_checkout_options *opts)
+{
+	git_index *index = NULL;
+	bool initialize_index;
+	int error;
+
+	GIT_ASSERT_ARG(repo);
+	GIT_ASSERT_ARG(directories);
+	GIT_ERROR_CHECK_VERSION(
+	        opts, GIT_CHECKOUT_OPTIONS_VERSION, "git_checkout_options");
+
+	if ((error = git_repository_index(&index, repo)) < 0)
+		goto done;
+
+	if (git_index_has_conflicts(index)) {
+		git_error_set(
+		        GIT_ERROR_INDEX,
+		        "cannot apply sparse checkout with unresolved conflicts");
+		error = GIT_ECONFLICT;
+		goto done;
+	}
+
+	initialize_index = git_index_entrycount(index) == 0;
+	git_index_free(index);
+	index = NULL;
+
+	if ((error = git_sparse_checkout_set(repo, directories)) < 0)
+		goto done;
+
+	if (initialize_index)
+		error = git_sparse_checkout_initialize_index(repo);
+	else
+		error = git_sparse_checkout_update_index(repo);
+
+	if (error < 0)
+		goto done;
+
+	error = git_sparse_checkout_checkout(repo, opts);
+
+done:
+	git_index_free(index);
+	return error;
+}

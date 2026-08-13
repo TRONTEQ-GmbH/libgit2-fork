@@ -390,12 +390,8 @@ static int sparse_checkout_clone(git_repository *repo, const git_clone_options *
 	if (!opts->sparse_checkout)
 		return 0;
 
-	if ((error = git_sparse_checkout_set(
-		     repo, &opts->sparse_checkout_directories)) < 0 ||
-	    (error = git_sparse_checkout_initialize_index(repo)) < 0)
-		return error;
-
-	return git_sparse_checkout_checkout(repo, &opts->checkout_opts);
+	return git_sparse_checkout_apply(
+		repo, &opts->sparse_checkout_directories, &opts->checkout_opts);
 }
 
 static int checkout_branch(
