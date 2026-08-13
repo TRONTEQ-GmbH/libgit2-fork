@@ -364,9 +364,11 @@ done:
 	return error;
 }
 
-int git_sparse_checkout_checkout(git_repository *repo)
+int git_sparse_checkout_checkout(
+        git_repository *repo,
+        const git_checkout_options *opts)
 {
-	git_checkout_options checkout_opts = GIT_CHECKOUT_OPTIONS_INIT;
+	git_checkout_options checkout_opts;
 	git_index *index = NULL;
 	git_treebuilder *builder = NULL;
 	git_tree *head = NULL, *empty = NULL;
@@ -375,6 +377,13 @@ int git_sparse_checkout_checkout(git_repository *repo)
 	int error;
 
 	GIT_ASSERT_ARG(repo);
+	GIT_ERROR_CHECK_VERSION(
+	        opts, GIT_CHECKOUT_OPTIONS_VERSION, "git_checkout_options");
+
+	if (opts)
+		checkout_opts = *opts;
+	else
+		checkout_opts = (git_checkout_options)GIT_CHECKOUT_OPTIONS_INIT;
 
 	if (git_repository_is_bare(repo)) {
 		git_error_set(

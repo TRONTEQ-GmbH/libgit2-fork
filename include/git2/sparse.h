@@ -84,9 +84,13 @@ GIT_EXTERN(int) git_sparse_checkout_initialize_index(git_repository *repo);
  * Existing excluded files are not removed from the working directory.
  *
  * @param repo repository whose sparse paths will be checked out
+ * @param opts optional checkout options; callbacks are preserved while
+ *        sparse checkout controls the strategy, baseline, and paths
  * @return 0 on success, or an error code
  */
-GIT_EXTERN(int) git_sparse_checkout_checkout(git_repository *repo);
+GIT_EXTERN(int) git_sparse_checkout_checkout(
+	git_repository *repo,
+	const git_checkout_options *opts);
 
 /** @} */
 GIT_END_DECL

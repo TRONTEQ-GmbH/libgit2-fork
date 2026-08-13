@@ -15,6 +15,7 @@
 #include "git2/checkout.h"
 #include "git2/commit.h"
 #include "git2/tree.h"
+#include "git2/sparse.h"
 
 #include "checkout.h"
 #include "remote.h"
@@ -369,7 +370,7 @@ static int should_checkout(
 {
 	int error;
 
-	if (!opts || is_bare ||
+	if (!opts || is_bare || opts->sparse_checkout_directories.count ||
 	    opts->checkout_opts.checkout_strategy == GIT_CHECKOUT_NONE) {
 		*out = false;
 		return 0;
@@ -380,6 +381,21 @@ static int should_checkout(
 
 	*out = !error;
 	return 0;
+}
+
+static int sparse_checkout_clone(git_repository *repo, const git_clone_options *opts)
+{
+	int error;
+
+	if (!opts->sparse_checkout_directories.count)
+		return 0;
+
+	if ((error = git_sparse_checkout_set(
+		     repo, &opts->sparse_checkout_directories)) < 0 ||
+	    (error = git_sparse_checkout_initialize_index(repo)) < 0)
+		return error;
+
+	return git_sparse_checkout_checkout(repo, &opts->checkout_opts);
 }
 
 static int checkout_branch(
@@ -452,7 +468,8 @@ static int clone_into(
 	if ((error = git_remote_fetch(remote, NULL, &opts->fetch_opts, git_str_cstr(&reflog_message))) != 0)
 		goto cleanup;
 
-	error = checkout_branch(repo, remote, opts, git_str_cstr(&reflog_message));
+	if ((error = checkout_branch(repo, remote, opts, git_str_cstr(&reflog_message))) == 0)
+		error = sparse_checkout_clone(repo, opts);
 
 cleanup:
 	git_remote_free(remote);
@@ -557,7 +574,8 @@ static int clone_local_into(
 	if ((error = git_remote_fetch(remote, NULL, &opts->fetch_opts, git_str_cstr(&reflog_message))) != 0)
 		goto cleanup;
 
-	error = checkout_branch(repo, remote, opts, git_str_cstr(&reflog_message));
+	if ((error = checkout_branch(repo, remote, opts, git_str_cstr(&reflog_message))) == 0)
+		error = sparse_checkout_clone(repo, opts);
 
 cleanup:
 	git_str_dispose(&reflog_message);

@@ -159,7 +159,7 @@ void test_repo_sparse__checks_out_included_paths(void)
 	cl_git_pass(p_unlink("testrepo/README"));
 	cl_assert(!git_fs_path_isfile("testrepo/README"));
 
-	cl_git_pass(git_sparse_checkout_checkout(g_repo));
+	cl_git_pass(git_sparse_checkout_checkout(g_repo, NULL));
 	cl_assert(git_fs_path_isfile("testrepo/README"));
 
 	git_index_free(index);
