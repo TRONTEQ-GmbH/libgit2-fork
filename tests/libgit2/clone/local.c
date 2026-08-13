@@ -267,6 +267,24 @@ void test_clone_local__shallow_fails(void)
 	cl_git_fail_with(GIT_ENOTSUPPORTED, git_clone(&repo, cl_fixture("testrepo.git"), "./clone.git", &opts));
 }
 
+void test_clone_local__filtered_sparse_clone_reaches_transport(void)
+{
+	char *directories[] = { "source" };
+	git_strarray sparse_directories = {
+		directories,
+		ARRAY_SIZE(directories),
+	};
+	git_repository *repo;
+	git_clone_options opts = GIT_CLONE_OPTIONS_INIT;
+
+	opts.fetch_opts.filter_spec = "blob:none";
+	opts.sparse_checkout_directories = sparse_directories;
+
+	cl_git_fail_with(
+		GIT_ENOTSUPPORTED,
+		git_clone(&repo, cl_fixture("testrepo.git"), "./clone.git", &opts));
+}
+
 void test_clone_local__sha256_via_no_local(void)
 {
 	git_repository *repo;

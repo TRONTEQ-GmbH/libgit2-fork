@@ -640,12 +640,21 @@ static int clone_repo(
 
 	GIT_ERROR_CHECK_VERSION(&options, GIT_CLONE_OPTIONS_VERSION, "git_clone_options");
 
+	if (options.sparse_checkout_directories.count &&
+	    !options.sparse_checkout_directories.strings) {
+		git_error_set(
+			GIT_ERROR_INVALID,
+			"sparse checkout directories must not be NULL");
+		return GIT_EINVALID;
+	}
+
 	if (options.fetch_opts.filter_spec &&
 	    !options.bare &&
+	    !options.sparse_checkout_directories.count &&
 	    options.checkout_opts.checkout_strategy != GIT_CHECKOUT_NONE) {
 		git_error_set(
 			GIT_ERROR_INVALID,
-			"filtered clones require GIT_CHECKOUT_NONE until promisor-object support is available");
+			"filtered clones require GIT_CHECKOUT_NONE or sparse checkout");
 		return GIT_EINVALID;
 	}
 
