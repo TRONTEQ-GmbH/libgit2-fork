@@ -116,6 +116,11 @@ GIT_EXTERN(int) git_sparse_checkout_disable(
 	git_repository *repo,
 	const git_checkout_options *opts);
 
+/** List explicitly selected cone-mode sparse checkout directories. */
+GIT_EXTERN(int) git_sparse_checkout_list(
+	git_strarray *out,
+	git_repository *repo);
+
 /** @} */
 GIT_END_DECL
 

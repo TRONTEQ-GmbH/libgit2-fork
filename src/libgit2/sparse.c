@@ -570,3 +570,58 @@ done:
 	git_index_free(index);
 	return error;
 }
+
+int git_sparse_checkout_list(git_strarray *out, git_repository *repo)
+{
+	git_str path = GIT_STR_INIT, patterns = GIT_STR_INIT;
+	git_vector directories = GIT_VECTOR_INIT;
+	const char *line, *end;
+	int error = 0;
+
+	GIT_ASSERT_ARG(out);
+	GIT_ASSERT_ARG(repo);
+	memset(out, 0, sizeof(*out));
+
+	if ((error = sparse_checkout_path(&path, repo)) < 0 ||
+	    (error = git_futils_readbuffer(&patterns, path.ptr)) < 0 ||
+	    (error = git_vector_init(&directories, 0, NULL)) < 0)
+		goto done;
+
+	line = patterns.ptr;
+	end = patterns.ptr + patterns.size;
+	while (line < end) {
+		const char *line_end = memchr(line, '\n', (size_t)(end - line));
+		const char *next;
+		size_t line_len;
+		char *directory;
+
+		if (!line_end)
+			line_end = end;
+		line_len = (size_t)(line_end - line);
+		next = line_end == end ? NULL : line_end + 1;
+
+		if (line_len >= 3 && line[0] == '/' &&
+		    line[line_len - 1] == '/' && line[1] != '*' &&
+		    !sparse_checkout_pattern_is_parent(
+		            line, line_len, next, end)) {
+			if ((directory = git__strndup(
+			             line + 1, line_len - 2)) == NULL ||
+			    (error = git_vector_insert(
+			             &directories, directory)) < 0) {
+				git__free(directory);
+				goto done;
+			}
+		}
+
+		line = line_end == end ? end : line_end + 1;
+	}
+
+	out->strings =
+	        (char **)git_vector_detach(&out->count, NULL, &directories);
+
+done:
+	git_vector_dispose_deep(&directories);
+	git_str_dispose(&patterns);
+	git_str_dispose(&path);
+	return error;
+}
