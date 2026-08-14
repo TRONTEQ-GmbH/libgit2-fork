@@ -38,19 +38,37 @@ static bool filter_spec_is_blob_limit(const char *filter_spec)
 	return !*size || (!size[1] && strchr("kmg", *size));
 }
 
+static bool filter_spec_is_tree_depth(const char *filter_spec)
+{
+	const char *depth;
+
+	if (strncmp(filter_spec, "tree:", 5))
+		return false;
+
+	depth = filter_spec + 5;
+	if (!*depth)
+		return false;
+
+	while (git__isdigit(*depth))
+		depth++;
+
+	return !*depth;
+}
+
 static int validate_filter_spec(const char *filter_spec)
 {
 	if (!filter_spec)
 		return 0;
 
 	if (!strcmp(filter_spec, "blob:none") ||
-	    filter_spec_is_blob_limit(filter_spec))
+	    filter_spec_is_blob_limit(filter_spec) ||
+	    filter_spec_is_tree_depth(filter_spec))
 		return 0;
 
 	git_error_set(
 	        GIT_ERROR_INVALID,
 	        "unsupported fetch filter '%s'; supported filters are "
-	        "'blob:none' and 'blob:limit=<n>[kmg]'",
+	        "'blob:none', 'blob:limit=<n>[kmg]', and 'tree:<depth>'",
 	        filter_spec);
 	return GIT_EINVALIDSPEC;
 }
