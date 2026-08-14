@@ -157,6 +157,35 @@ void test_network_fetchlocal__reads_promisor_objects(void)
 	cleanup_promisor_repository(repo, origin, odb);
 }
 
+void test_network_fetchlocal__reads_promisor_objects_with_fetch_options(void)
+{
+	git_repository *repo;
+	git_remote *origin;
+	git_odb *odb;
+	git_odb_object *object;
+	git_oid oid;
+	git_fetch_options opts = GIT_FETCH_OPTIONS_INIT;
+	int callcount = 0;
+
+	setup_promisor_repository(&repo, &origin, &odb);
+	cl_git_pass(git_oid_from_string(
+		&oid, "a8233120f6ad708f843d861ce2b7228ec4e3dec6",
+		GIT_OID_SHA1));
+
+	opts.callbacks.transfer_progress = transfer_cb;
+	opts.callbacks.payload = &callcount;
+	git_repository__set_promisor_fetch_options(repo, &opts);
+
+	cl_assert(!git_odb_exists(odb, &oid));
+	cl_git_pass(git_odb_read(&object, odb, &oid));
+	cl_assert_equal_oid(&oid, git_odb_object_id(object));
+	cl_assert(callcount > 0);
+
+	git_odb_object_free(object);
+	git_repository__set_promisor_fetch_options(repo, NULL);
+	cleanup_promisor_repository(repo, origin, odb);
+}
+
 void test_network_fetchlocal__reads_promisor_object_headers(void)
 {
 	git_repository *repo;

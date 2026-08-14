@@ -385,11 +385,17 @@ static int should_checkout(
 
 static int sparse_checkout_clone(git_repository *repo, const git_clone_options *opts)
 {
+	int error;
+
 	if (!opts->sparse_checkout)
 		return 0;
 
-	return git_sparse_checkout_apply(
+	git_repository__set_promisor_fetch_options(repo, &opts->fetch_opts);
+	error = git_sparse_checkout_apply(
 		repo, &opts->sparse_checkout_directories, &opts->checkout_opts);
+	git_repository__set_promisor_fetch_options(repo, NULL);
+
+	return error;
 }
 
 static int checkout_branch(

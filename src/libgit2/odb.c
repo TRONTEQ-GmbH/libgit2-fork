@@ -70,7 +70,8 @@ static int odb_fetch_promisor(git_odb *db, const git_oid *id)
 	}
 
 	git_oid_cpy(&oid, id);
-	error = git_repository_fetch_promisor(repo, &oids, NULL);
+	error = git_repository_fetch_promisor(
+		repo, &oids, repo->promisor_fetch_options);
 	git_atomic32_dec(&db->promisor_fetching);
 	return error;
 }

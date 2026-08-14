@@ -2096,6 +2096,13 @@ done:
 	return error;
 }
 
+void git_repository__set_promisor_fetch_options(
+	git_repository *repo,
+	const git_fetch_options *opts)
+{
+	repo->promisor_fetch_options = opts;
+}
+
 static int load_refstorage_format(git_repository *repo, git_config *config)
 {
 	git_config_entry *entry = NULL;
