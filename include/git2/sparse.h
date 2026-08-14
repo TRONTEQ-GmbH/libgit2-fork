@@ -111,6 +111,11 @@ GIT_EXTERN(int) git_sparse_checkout_apply(
 	const git_strarray *directories,
 	const git_checkout_options *opts);
 
+/** Disable sparse checkout and materialize all HEAD paths. */
+GIT_EXTERN(int) git_sparse_checkout_disable(
+	git_repository *repo,
+	const git_checkout_options *opts);
+
 /** @} */
 GIT_END_DECL
 

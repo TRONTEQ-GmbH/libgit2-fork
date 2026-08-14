@@ -525,3 +525,48 @@ done:
 	git_index_free(index);
 	return error;
 }
+
+int git_sparse_checkout_disable(
+        git_repository *repo,
+        const git_checkout_options *opts)
+{
+	git_config *config;
+	git_index *index = NULL;
+	size_t i;
+	int error;
+
+	GIT_ASSERT_ARG(repo);
+	GIT_ERROR_CHECK_VERSION(
+	        opts, GIT_CHECKOUT_OPTIONS_VERSION, "git_checkout_options");
+
+	if ((error = git_repository_config__weakptr(&config, repo)) < 0 ||
+	    (error = git_config_set_bool(
+	             config, "core.sparsecheckout", false)) < 0 ||
+	    (error = git_config_set_bool(
+	             config, "core.sparsecheckoutcone", false)) < 0 ||
+	    (error = git_repository_index(&index, repo)) < 0)
+		goto done;
+
+	for (i = 0; i < git_index_entrycount(index); i++) {
+		const git_index_entry *entry = git_index_get_byindex(index, i);
+		git_index_entry updated = *entry;
+
+		if (GIT_INDEX_ENTRY_STAGE(entry) != 0 ||
+		    (updated.flags_extended & GIT_INDEX_ENTRY_SKIP_WORKTREE) ==
+		            0)
+			continue;
+
+		updated.flags_extended &= ~GIT_INDEX_ENTRY_SKIP_WORKTREE;
+		if ((error = git_index_add(index, &updated)) < 0)
+			goto done;
+	}
+
+	if ((error = git_index_write(index)) < 0)
+		goto done;
+
+	error = git_sparse_checkout_checkout(repo, opts);
+
+done:
+	git_index_free(index);
+	return error;
+}
