@@ -651,16 +651,6 @@ static int clone_repo(
 		return GIT_EINVALID;
 	}
 
-	if (options.fetch_opts.filter_spec &&
-	    !options.bare &&
-	    !options.sparse_checkout &&
-	    options.checkout_opts.checkout_strategy != GIT_CHECKOUT_NONE) {
-		git_error_set(
-			GIT_ERROR_INVALID,
-			"filtered clones require GIT_CHECKOUT_NONE or sparse checkout");
-		return GIT_EINVALID;
-	}
-
 	/* enforce some behavior on fetch */
 	options.fetch_opts.update_fetchhead = 0;
 

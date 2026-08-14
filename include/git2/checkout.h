@@ -297,9 +297,10 @@ typedef void GIT_CALLBACK(git_checkout_progress_cb)(
 /**
  * Callback invoked when checkout needs a blob that is missing locally.
  *
- * The callback may hydrate the blob, for example by calling
- * `git_repository_fetch_promisor`. Returning zero causes checkout to retry
- * the blob lookup. Returning a non-zero value aborts checkout.
+ * Partial clones automatically hydrate omitted objects through their
+ * promisor remote. This callback is useful when an application needs to
+ * provide a custom hydration source. Returning zero causes checkout to
+ * retry the blob lookup. Returning a non-zero value aborts checkout.
  *
  * @param repo repository being checked out
  * @param oid ID of the missing blob
@@ -409,7 +410,7 @@ typedef struct git_checkout_options {
 	void *perfdata_payload;
 
 	/**
-	 * Optional callback to hydrate a blob that is missing locally.
+	 * Optional callback to hydrate a blob from an application-provided source.
 	 */
 	git_checkout_missing_blob_cb missing_blob_cb;
 
