@@ -858,8 +858,8 @@ typedef struct {
 	 * "blob:none". A filtered fetch requires a server that advertises
 	 * the `filter` upload-pack capability.
 	 *
-	 * A filtered clone must disable checkout with
-	 * `GIT_CHECKOUT_NONE` until promisor-object support is available.
+	 * A filtered clone records the remote as its promisor remote so
+	 * omitted objects can be fetched on demand.
 	 */
 	const char *filter_spec;
 } git_fetch_options;

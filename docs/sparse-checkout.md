@@ -29,11 +29,10 @@ clone_opts.sparse_checkout = 1;
 clone_opts.sparse_checkout_directories = directories;
 ```
 
-Filtered clones require `checkout_opts.missing_blob_cb` whenever an
-included blob is absent locally. The callback should fetch the object
-from the configured promisor remote, for example with
-`git_repository_fetch_promisor`, and return zero so checkout can retry
-the blob lookup.
+When an operation reads an omitted object, the repository-owned ODB
+fetches it transparently from the configured promisor remote. Applications
+can also fetch known object IDs explicitly with
+`git_repository_fetch_promisor`.
 
 `git_sparse_checkout_list` returns explicit selected directories and
 `git_sparse_checkout_is_enabled` reports the current enabled state.
