@@ -25,11 +25,16 @@ void test_repo_sparse__configures_cone_mode(void)
 		ARRAY_SIZE(directories),
 	};
 	git_config *config;
+	git_strarray listed_directories = { 0 };
 	git_str path = GIT_STR_INIT;
 	git_str patterns = GIT_STR_INIT;
 	int value;
 
 	cl_git_pass(git_sparse_checkout_set(g_repo, &sparse_directories));
+	cl_git_pass(git_sparse_checkout_list(&listed_directories, g_repo));
+	cl_assert_equal_i(2, listed_directories.count);
+	cl_assert_equal_s("src/libgit2", listed_directories.strings[0]);
+	cl_assert_equal_s("tests", listed_directories.strings[1]);
 
 	cl_git_pass(git_repository_config(&config, g_repo));
 	cl_git_pass(git_config_get_bool(&value, config, "core.sparsecheckout"));
@@ -54,6 +59,7 @@ void test_repo_sparse__configures_cone_mode(void)
 
 	git_str_dispose(&patterns);
 	git_str_dispose(&path);
+	git_strarray_dispose(&listed_directories);
 	git_config_free(config);
 }
 
