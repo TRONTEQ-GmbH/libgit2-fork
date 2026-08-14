@@ -329,6 +329,8 @@ void test_clone_local__sparse_checkout(void)
 	cl_assert(git_fs_path_isfile("./clone/root.txt"));
 	cl_assert(git_fs_path_isfile("./clone/selected/keep.txt"));
 	cl_assert(!git_fs_path_isfile("./clone/excluded/drop.txt"));
+	cl_git_pass(git_sparse_checkout_disable(clone, NULL));
+	cl_assert(git_fs_path_isfile("./clone/excluded/drop.txt"));
 
 	git_repository_free(clone);
 	opts.sparse_checkout_directories.strings = NULL;
