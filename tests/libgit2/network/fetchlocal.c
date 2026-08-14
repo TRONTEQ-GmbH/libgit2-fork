@@ -20,6 +20,32 @@ static void cleanup_local_repo(void *path)
 	cl_fixture_cleanup((char *)path);
 }
 
+static void setup_promisor_repository(
+        git_repository **repo_out,
+        git_remote **remote_out,
+        git_odb **odb_out)
+{
+	const char *url = cl_git_fixture_url("testrepo.git");
+
+	cl_set_cleanup(&cleanup_local_repo, "foo");
+	cl_git_pass(git_repository_init(repo_out, "foo", true));
+	cl_git_pass(git_remote_create(
+	        remote_out, *repo_out, GIT_REMOTE_ORIGIN, url));
+	cl_git_pass(git_repository__set_partial_clone(
+	        *repo_out, GIT_REMOTE_ORIGIN, "blob:none"));
+	cl_git_pass(git_repository_odb(odb_out, *repo_out));
+}
+
+static void cleanup_promisor_repository(
+        git_repository *repo,
+        git_remote *remote,
+        git_odb *odb)
+{
+	git_odb_free(odb);
+	git_remote_free(remote);
+	git_repository_free(repo);
+}
+
 void test_network_fetchlocal__cleanup(void)
 {
 	cl_git_sandbox_cleanup();
@@ -116,26 +142,41 @@ void test_network_fetchlocal__reads_promisor_objects(void)
 	git_odb *odb;
 	git_odb_object *object;
 	git_oid oid;
-	const char *url = cl_git_fixture_url("testrepo.git");
 
-	cl_set_cleanup(&cleanup_local_repo, "foo");
-	cl_git_pass(git_repository_init(&repo, "foo", true));
-	cl_git_pass(git_remote_create(&origin, repo, GIT_REMOTE_ORIGIN, url));
-	cl_git_pass(git_repository__set_partial_clone(
-	        repo, GIT_REMOTE_ORIGIN, "blob:none"));
+	setup_promisor_repository(&repo, &origin, &odb);
 	cl_git_pass(git_oid_from_string(
 	        &oid, "a8233120f6ad708f843d861ce2b7228ec4e3dec6",
 	        GIT_OID_SHA1));
-	cl_git_pass(git_repository_odb(&odb, repo));
 
 	cl_assert(!git_odb_exists(odb, &oid));
 	cl_git_pass(git_odb_read(&object, odb, &oid));
 	cl_assert_equal_oid(&oid, git_odb_object_id(object));
 
 	git_odb_object_free(object);
-	git_odb_free(odb);
-	git_remote_free(origin);
-	git_repository_free(repo);
+	cleanup_promisor_repository(repo, origin, odb);
+}
+
+void test_network_fetchlocal__reads_promisor_object_headers(void)
+{
+	git_repository *repo;
+	git_remote *origin;
+	git_odb *odb;
+	git_object_t type;
+	git_oid oid;
+	size_t length;
+
+	setup_promisor_repository(&repo, &origin, &odb);
+	cl_git_pass(git_oid_from_string(
+	        &oid, "a71586c1dfe8a71c6cbf6c129f404c5642ff31bd",
+	        GIT_OID_SHA1));
+
+	cl_assert(!git_odb_exists(odb, &oid));
+	cl_git_pass(git_odb_read_header(&length, &type, odb, &oid));
+	cl_assert_equal_i(GIT_OBJECT_BLOB, type);
+	cl_assert_equal_i(12, length);
+	cl_assert(git_odb_exists(odb, &oid));
+
+	cleanup_promisor_repository(repo, origin, odb);
 }
 
 void test_network_fetchlocal__prune(void)
