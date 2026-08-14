@@ -475,6 +475,30 @@ done:
 	return error;
 }
 
+static int
+sparse_checkout_index_is_clean(git_repository *repo, git_index *index)
+{
+	git_diff *diff = NULL;
+	git_tree *tree = NULL;
+	int error;
+
+	if ((error = git_repository_head_tree(&tree, repo)) < 0 ||
+	    (error = git_diff_tree_to_index(&diff, repo, tree, index, NULL)) < 0)
+		goto done;
+
+	if (git_diff_num_deltas(diff) > 0) {
+		git_error_set(
+		        GIT_ERROR_INDEX,
+		        "cannot apply sparse checkout with staged changes");
+		error = GIT_EUNCOMMITTED;
+	}
+
+done:
+	git_diff_free(diff);
+	git_tree_free(tree);
+	return error;
+}
+
 int git_sparse_checkout_apply(
         git_repository *repo,
         const git_strarray *directories,
@@ -501,6 +525,10 @@ int git_sparse_checkout_apply(
 	}
 
 	initialize_index = git_index_entrycount(index) == 0;
+	if (!initialize_index &&
+	    (error = sparse_checkout_index_is_clean(repo, index)) < 0)
+		goto done;
+
 	git_index_free(index);
 	index = NULL;
 

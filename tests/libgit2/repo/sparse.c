@@ -172,3 +172,22 @@ void test_repo_sparse__checks_out_included_paths(void)
 
 	git_index_free(index);
 }
+
+void test_repo_sparse__rejects_staged_changes(void)
+{
+	git_strarray sparse_directories = {
+		NULL,
+		0,
+	};
+	git_index *index;
+
+	cl_git_pass(git_repository_index(&index, g_repo));
+	cl_git_pass(git_index_remove_bypath(index, "README"));
+	cl_git_pass(git_index_write(index));
+
+	cl_git_fail_with(
+	        git_sparse_checkout_apply(g_repo, &sparse_directories, NULL),
+	        GIT_EUNCOMMITTED);
+
+	git_index_free(index);
+}
