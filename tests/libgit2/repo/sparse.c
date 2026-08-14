@@ -29,8 +29,11 @@ void test_repo_sparse__configures_cone_mode(void)
 	git_str path = GIT_STR_INIT;
 	git_str patterns = GIT_STR_INIT;
 	int value;
+	int enabled;
 
 	cl_git_pass(git_sparse_checkout_set(g_repo, &sparse_directories));
+	cl_git_pass(git_sparse_checkout_is_enabled(&enabled, g_repo));
+	cl_assert(enabled);
 	cl_git_pass(git_sparse_checkout_list(&listed_directories, g_repo));
 	cl_assert_equal_i(2, listed_directories.count);
 	cl_assert_equal_s("src/libgit2", listed_directories.strings[0]);

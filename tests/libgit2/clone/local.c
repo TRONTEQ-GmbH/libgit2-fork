@@ -299,6 +299,7 @@ void test_clone_local__sparse_checkout(void)
 	git_clone_options opts = GIT_CLONE_OPTIONS_INIT;
 	git_index *index;
 	git_repository *source, *clone, *full;
+	int sparse_enabled;
 
 	cl_git_pass(git_repository_init(&source, "./source", 0));
 	cl_git_mkfile("./source/root.txt", "root\n");
@@ -330,6 +331,8 @@ void test_clone_local__sparse_checkout(void)
 	cl_assert(git_fs_path_isfile("./clone/selected/keep.txt"));
 	cl_assert(!git_fs_path_isfile("./clone/excluded/drop.txt"));
 	cl_git_pass(git_sparse_checkout_disable(clone, NULL));
+	cl_git_pass(git_sparse_checkout_is_enabled(&sparse_enabled, clone));
+	cl_assert(!sparse_enabled);
 	cl_assert(git_fs_path_isfile("./clone/excluded/drop.txt"));
 
 	git_repository_free(clone);

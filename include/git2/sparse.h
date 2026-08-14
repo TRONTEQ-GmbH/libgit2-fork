@@ -121,6 +121,11 @@ GIT_EXTERN(int) git_sparse_checkout_list(
 	git_strarray *out,
 	git_repository *repo);
 
+/** Determine whether cone-mode sparse checkout is enabled. */
+GIT_EXTERN(int) git_sparse_checkout_is_enabled(
+	int *out,
+	git_repository *repo);
+
 /** @} */
 GIT_END_DECL
 

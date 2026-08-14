@@ -625,3 +625,24 @@ done:
 	git_str_dispose(&path);
 	return error;
 }
+
+int git_sparse_checkout_is_enabled(int *out, git_repository *repo)
+{
+	git_config *config;
+	int error;
+
+	GIT_ASSERT_ARG(out);
+	GIT_ASSERT_ARG(repo);
+	*out = 0;
+
+	if ((error = git_repository_config__weakptr(&config, repo)) < 0)
+		return error;
+
+	error = git_config_get_bool(out, config, "core.sparsecheckout");
+	if (error == GIT_ENOTFOUND) {
+		git_error_clear();
+		return 0;
+	}
+
+	return error;
+}
