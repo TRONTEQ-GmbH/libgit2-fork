@@ -2,6 +2,7 @@
 
 #include "git2/clone.h"
 #include "git2/index.h"
+#include "git2/sparse.h"
 #include "clone.h"
 #include "path.h"
 #include "posix.h"
@@ -294,9 +295,10 @@ void test_clone_local__sparse_checkout(void)
 		directories,
 		ARRAY_SIZE(directories),
 	};
+	git_strarray root_only = { NULL, 0 };
 	git_clone_options opts = GIT_CLONE_OPTIONS_INIT;
 	git_index *index;
-	git_repository *source, *clone;
+	git_repository *source, *clone, *full;
 
 	cl_git_pass(git_repository_init(&source, "./source", 0));
 	cl_git_mkfile("./source/root.txt", "root\n");
@@ -309,6 +311,16 @@ void test_clone_local__sparse_checkout(void)
 	cl_git_pass(git_index_add_all(index, NULL, 0, NULL, NULL));
 	cl_git_pass(git_index_write(index));
 	cl_repo_commit_from_index(NULL, source, NULL, 0, "initial commit");
+	cl_git_pass(git_clone(&full, "./source", "./full", NULL));
+
+	cl_git_pass(git_sparse_checkout_apply(
+		full, &sparse_directories, NULL));
+	cl_assert(!git_fs_path_isfile("./full/excluded/drop.txt"));
+
+	cl_git_pass(p_mkdir("./full/excluded", 0777));
+	cl_git_mkfile("./full/excluded/drop.txt", "modified\n");
+	cl_git_pass(git_sparse_checkout_apply(full, &root_only, NULL));
+	cl_assert(git_fs_path_isfile("./full/excluded/drop.txt"));
 
 	opts.sparse_checkout_directories = sparse_directories;
 	opts.sparse_checkout = 1;
@@ -328,11 +340,14 @@ void test_clone_local__sparse_checkout(void)
 
 	git_index_free(index);
 	git_repository_free(clone);
+	git_repository_free(full);
 	git_repository_free(source);
 	cl_git_pass(
 	        git_futils_rmdir_r("./clone", NULL, GIT_RMDIR_REMOVE_FILES));
+	cl_git_pass(git_futils_rmdir_r(
+	        "./root-only", NULL, GIT_RMDIR_REMOVE_FILES));
 	cl_git_pass(
-	        git_futils_rmdir_r("./root-only", NULL, GIT_RMDIR_REMOVE_FILES));
+	        git_futils_rmdir_r("./full", NULL, GIT_RMDIR_REMOVE_FILES));
 	cl_git_pass(
 	        git_futils_rmdir_r("./source", NULL, GIT_RMDIR_REMOVE_FILES));
 }
