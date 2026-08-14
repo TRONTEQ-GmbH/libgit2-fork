@@ -102,7 +102,7 @@ void test_repo_extensions__partialclone(void)
 	int promisor;
 
 	cl_git_pass(git_repository__set_partial_clone(repo, "origin", "blob:none"));
-	cl_git_pass(git_repository_config(&config, repo));
+	cl_git_pass(git_repository_config_snapshot(&config, repo));
 
 	cl_git_pass(git_config_get_int32(
 		&version, config, "core.repositoryformatversion"));

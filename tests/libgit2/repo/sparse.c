@@ -80,7 +80,9 @@ void test_repo_sparse__updates_skip_worktree_flags(void)
 	const git_index_entry *indexed;
 
 	entry.mode = GIT_FILEMODE_BLOB;
-	git_oid_fromstr(&entry.id, "a71586c1dfe8a71c6cbf6c129f404c5642ff31bd");
+	cl_git_pass(git_oid_from_string(
+	        &entry.id, "a71586c1dfe8a71c6cbf6c129f404c5642ff31bd",
+	        GIT_OID_SHA1));
 
 	cl_git_pass(git_repository_index(&index, g_repo));
 	cl_git_pass(git_index_clear(index));
@@ -126,7 +128,7 @@ void test_repo_sparse__updates_skip_worktree_flags(void)
 	git_index_free(index);
 }
 
-void test_repo_sparse__initializes_empty_index_from_head(void)
+void test_repo_sparse__empty_index_is_initialized_from_head(void)
 {
 	git_strarray sparse_directories = {
 		NULL,
@@ -162,8 +164,6 @@ void test_repo_sparse__checks_out_included_paths(void)
 	cl_git_pass(git_repository_index(&index, g_repo));
 	cl_git_pass(git_index_clear(index));
 	cl_git_pass(git_index_write(index));
-
-	cl_git_pass(p_unlink("testrepo/README"));
 	cl_assert(!git_fs_path_isfile("testrepo/README"));
 
 	cl_git_pass(

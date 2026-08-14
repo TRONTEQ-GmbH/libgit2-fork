@@ -2,6 +2,7 @@
 
 #include "path.h"
 #include "remote.h"
+#include "repository.h"
 
 static const char* tagger_name = "Vicent Marti";
 static const char* tagger_email = "vicent@github.com";

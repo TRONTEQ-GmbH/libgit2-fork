@@ -9,6 +9,7 @@
 #define INCLUDE_git_sparse_h__
 
 #include "common.h"
+#include "checkout.h"
 #include "repository.h"
 #include "strarray.h"
 

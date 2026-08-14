@@ -385,8 +385,6 @@ static int should_checkout(
 
 static int sparse_checkout_clone(git_repository *repo, const git_clone_options *opts)
 {
-	int error;
-
 	if (!opts->sparse_checkout)
 		return 0;
 
@@ -679,7 +677,9 @@ static int clone_repo(
 	if (!(error = create_and_configure_origin(&origin, repo, url, &options))) {
 		bool clone_local;
 
-		if ((error = git_clone__should_clone_local(&clone_local, url, options.local)) < 0) {
+		if (options.fetch_opts.filter_spec)
+			clone_local = false;
+		else if ((error = git_clone__should_clone_local(&clone_local, url, options.local)) < 0) {
 			git_remote_free(origin);
 			return error;
 		}

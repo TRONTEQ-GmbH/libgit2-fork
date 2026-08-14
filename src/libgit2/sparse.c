@@ -371,9 +371,7 @@ int git_sparse_checkout_checkout(
 {
 	git_checkout_options checkout_opts;
 	git_index *index = NULL;
-	git_treebuilder *builder = NULL;
-	git_tree *head = NULL, *empty = NULL;
-	git_oid empty_id;
+	git_tree *head = NULL;
 	git_vector paths = GIT_VECTOR_INIT;
 	int error;
 
@@ -408,13 +406,10 @@ int git_sparse_checkout_checkout(
 	if ((error = git_vector_init(
 	             &paths, git_index_entrycount(index), NULL)) < 0 ||
 	    (error = sparse_checkout_collect_paths(&paths, repo)) < 0 ||
-	    (error = git_treebuilder_new(&builder, repo, NULL)) < 0 ||
-	    (error = git_treebuilder_write(&empty_id, builder)) < 0 ||
-	    (error = git_tree_lookup(&empty, repo, &empty_id)) < 0)
+	    (error = git_repository_head_tree(&head, repo)) < 0)
 		goto done;
 
-	checkout_opts.checkout_strategy = GIT_CHECKOUT_RECREATE_MISSING;
-	checkout_opts.baseline = empty;
+	checkout_opts.checkout_strategy |= GIT_CHECKOUT_RECREATE_MISSING;
 	checkout_opts.paths.strings = (char **)paths.contents;
 	checkout_opts.paths.count = paths.length;
 
@@ -422,8 +417,6 @@ int git_sparse_checkout_checkout(
 
 done:
 	git_vector_dispose_deep(&paths);
-	git_tree_free(empty);
-	git_treebuilder_free(builder);
 	git_tree_free(head);
 	git_index_free(index);
 	return error;

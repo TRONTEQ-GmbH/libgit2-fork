@@ -370,7 +370,7 @@ void test_transports_smart_packet__filter_capability(void)
 void test_transports_smart_packet__blob_none_filter_request(void)
 {
 	static const char expected[] =
-		"003bwant 0000000000000000000000000000000000000000 \0filter \n"
+		"003awant 0000000000000000000000000000000000000000 filter \n"
 		"0015filter blob:none\n"
 		"0000";
 	git_remote_head head = { 0 };
@@ -398,8 +398,7 @@ void test_transports_smart_packet__blob_none_filter_request(void)
 void test_transports_smart_packet__reachable_oid_capability(void)
 {
 	static const char expected[] =
-		"0051want 0000000000000000000000000000000000000000 "
-		"\0allow-reachable-sha1-in-want \n"
+		"0050want 0000000000000000000000000000000000000000 allow-reachable-sha1-in-want \n"
 		"0000";
 	git_remote_head head = { 0 };
 	const git_remote_head *refs[] = { &head };
