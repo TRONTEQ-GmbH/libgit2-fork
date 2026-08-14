@@ -288,6 +288,46 @@ void test_clone_local__filtered_sparse_clone_reaches_transport(void)
 		git_clone(&repo, cl_fixture("testrepo.git"), "./clone.git", &opts));
 }
 
+void test_clone_local__blob_limit_filtered_sparse_clone_reaches_transport(void)
+{
+	char *directories[] = { "source" };
+	git_strarray sparse_directories = {
+		directories,
+		ARRAY_SIZE(directories),
+	};
+	git_repository *repo;
+	git_clone_options opts = GIT_CLONE_OPTIONS_INIT;
+
+	opts.fetch_opts.filter_spec = "blob:limit=1k";
+	opts.sparse_checkout_directories = sparse_directories;
+	opts.sparse_checkout = 1;
+
+	cl_git_fail_with(
+	        GIT_ENOTSUPPORTED, git_clone(
+	                                   &repo, cl_fixture("testrepo.git"),
+	                                   "./clone.git", &opts));
+}
+
+void test_clone_local__rejects_invalid_blob_limit_filter(void)
+{
+	char *directories[] = { "source" };
+	git_strarray sparse_directories = {
+		directories,
+		ARRAY_SIZE(directories),
+	};
+	git_repository *repo;
+	git_clone_options opts = GIT_CLONE_OPTIONS_INIT;
+
+	opts.fetch_opts.filter_spec = "blob:limit=1x";
+	opts.sparse_checkout_directories = sparse_directories;
+	opts.sparse_checkout = 1;
+
+	cl_git_fail_with(
+	        GIT_EINVALIDSPEC, git_clone(
+	                                  &repo, cl_fixture("testrepo.git"),
+	                                  "./clone.git", &opts));
+}
+
 void test_clone_local__sparse_checkout(void)
 {
 	char *directories[] = { "selected" };

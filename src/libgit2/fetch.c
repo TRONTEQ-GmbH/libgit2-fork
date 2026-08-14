@@ -21,18 +21,37 @@
 #include "refs.h"
 #include "transports/smart.h"
 
+static bool filter_spec_is_blob_limit(const char *filter_spec)
+{
+	const char *size;
+
+	if (strncmp(filter_spec, "blob:limit=", 11))
+		return false;
+
+	size = filter_spec + 11;
+	if (!*size)
+		return false;
+
+	while (git__isdigit(*size))
+		size++;
+
+	return !*size || (!size[1] && strchr("kmg", *size));
+}
+
 static int validate_filter_spec(const char *filter_spec)
 {
 	if (!filter_spec)
 		return 0;
 
-	if (!strcmp(filter_spec, "blob:none"))
+	if (!strcmp(filter_spec, "blob:none") ||
+	    filter_spec_is_blob_limit(filter_spec))
 		return 0;
 
 	git_error_set(
-		GIT_ERROR_INVALID,
-		"unsupported fetch filter '%s'; only 'blob:none' is supported",
-		filter_spec);
+	        GIT_ERROR_INVALID,
+	        "unsupported fetch filter '%s'; supported filters are "
+	        "'blob:none' and 'blob:limit=<n>[kmg]'",
+	        filter_spec);
 	return GIT_EINVALIDSPEC;
 }
 

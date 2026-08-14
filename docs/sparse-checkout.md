@@ -29,6 +29,9 @@ clone_opts.sparse_checkout = 1;
 clone_opts.sparse_checkout_directories = directories;
 ```
 
+libgit2 accepts `blob:none` and `blob:limit=<n>[kmg]` filters. The
+optional `k`, `m`, and `g` suffixes denote KiB, MiB, and GiB.
+
 When an operation reads an omitted object, the repository-owned ODB
 fetches it transparently from the configured promisor remote. Applications
 can also fetch known object IDs explicitly with

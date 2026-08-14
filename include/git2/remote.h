@@ -854,9 +854,9 @@ typedef struct {
 	/**
 	 * Object filter specification to send to the server during fetch.
 	 *
-	 * NULL performs an unfiltered fetch. This release supports only
-	 * "blob:none". A filtered fetch requires a server that advertises
-	 * the `filter` upload-pack capability.
+	 * NULL performs an unfiltered fetch. This release supports
+	 * "blob:none" and "blob:limit=<n>[kmg]". A filtered fetch requires
+	 * a server that advertises the `filter` upload-pack capability.
 	 *
 	 * A filtered clone records the remote as its promisor remote so
 	 * omitted objects can be fetched on demand.
