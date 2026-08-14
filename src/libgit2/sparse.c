@@ -7,6 +7,7 @@
 
 #include "git2/sparse.h"
 #include "git2/checkout.h"
+#include "git2/diff.h"
 #include "git2/index.h"
 #include "git2/tree.h"
 
@@ -428,6 +429,52 @@ done:
 	return error;
 }
 
+static int sparse_checkout_remove_excluded(git_repository *repo)
+{
+	git_diff_options diff_opts = GIT_DIFF_OPTIONS_INIT;
+	git_diff *diff = NULL;
+	git_index *index = NULL;
+	git_tree *tree = NULL;
+	const char *workdir;
+	size_t i;
+	int error;
+
+	if ((error = git_repository_head_tree(&tree, repo)) < 0 ||
+	    (error = git_repository_index(&index, repo)) < 0)
+		goto done;
+
+	diff_opts.flags |= GIT_DIFF_INCLUDE_UNMODIFIED;
+	if ((error = git_diff_tree_to_workdir(&diff, repo, tree, &diff_opts)) <
+	    0)
+		goto done;
+
+	workdir = git_repository_workdir(repo);
+	for (i = 0; i < git_diff_num_deltas(diff); i++) {
+		const git_diff_delta *delta = git_diff_get_delta(diff, i);
+		const git_index_entry *entry;
+
+		if (delta->status != GIT_DELTA_UNMODIFIED)
+			continue;
+
+		entry = git_index_get_bypath(index, delta->old_file.path, 0);
+		if (!entry || (entry->flags_extended &
+		               GIT_INDEX_ENTRY_SKIP_WORKTREE) == 0)
+			continue;
+
+		if ((error = git_futils_rmdir_r(
+		             delta->old_file.path, workdir,
+		             GIT_RMDIR_EMPTY_PARENTS |
+		                     GIT_RMDIR_REMOVE_FILES)) < 0)
+			goto done;
+	}
+
+done:
+	git_diff_free(diff);
+	git_index_free(index);
+	git_tree_free(tree);
+	return error;
+}
+
 int git_sparse_checkout_apply(
         git_repository *repo,
         const git_strarray *directories,
@@ -466,6 +513,10 @@ int git_sparse_checkout_apply(
 		error = git_sparse_checkout_update_index(repo);
 
 	if (error < 0)
+		goto done;
+
+	if (!initialize_index &&
+	    (error = sparse_checkout_remove_excluded(repo)) < 0)
 		goto done;
 
 	error = git_sparse_checkout_checkout(repo, opts);
