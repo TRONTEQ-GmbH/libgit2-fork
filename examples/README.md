@@ -24,24 +24,15 @@ such as:
 Partial clone and sparse checkout
 ---------------------------------
 
-`lg2 partial-clone` reads `git-lg2.conf` from the current working directory.
-It clones into `test-lg2-clone`, requests the `blob:none` filter and checks
-out the configured repository directory using cone-mode sparse checkout.
-
-To create only the configured directory tree, without checking out files or
-downloading blobs, use:
-
-    ../build/linux-x86_64-debug/examples/lg2 partial-clone --directories-only
-
-The created empty directories are local placeholders. Git does not track empty
-directories, so they are not part of a subsequent commit.
+`lg2 partial-clone <url> <path> <directory>...` demonstrates a filtered
+`blob:none` clone combined with cone-mode sparse checkout. Each directory is
+relative to the repository root.
 
 Build and run it from the repository root:
 
     cmake --build build/linux-x86_64-debug --target lg2
-    cd examples
-    ../build/linux-x86_64-debug/examples/lg2 partial-clone
+    build/linux-x86_64-debug/examples/lg2 partial-clone \
+        https://github.com/libgit2/libgit2.git libgit2-clone src/libgit2 tests
 
-For private GitHub repositories, set `username` and `password` in
-`git-lg2.conf`; the password must be a personal access token. Protect this
-file accordingly, for example with `chmod 600 git-lg2.conf`.
+For authenticated remotes, the command uses the shared interactive credential
+callback used by the other `lg2` network examples.

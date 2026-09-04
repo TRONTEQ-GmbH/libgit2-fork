@@ -101,7 +101,8 @@ GIT_EXTERN(int) git_sparse_checkout_checkout(
  * included paths. Conflicted indexes and indexes with staged changes are
  * rejected. An empty index is initialized from HEAD.
  *
- * Existing excluded files are not removed from the working directory.
+ * Clean paths that become excluded are removed from the working directory;
+ * locally modified excluded paths are preserved.
  *
  * @param repo repository to configure and check out
  * @param directories directories to include in the cone

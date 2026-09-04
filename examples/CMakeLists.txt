@@ -1,9 +1,6 @@
 # examples: code usage examples of libgit2
 
 file(GLOB SRC_EXAMPLES *.c *.h)
-list(REMOVE_ITEM SRC_EXAMPLES
-	${CMAKE_CURRENT_SOURCE_DIR}/partial-clone.c)
-list(APPEND SRC_EXAMPLES partial-clone.c)
 
 add_executable(lg2 ${SRC_EXAMPLES})
 
